@@ -3,39 +3,76 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
 class MyLocationPage extends StatefulWidget {
-  const MyLocationPage({super.key});
+  const MyLocationPage({Key? key}) : super(key: key);
 
   @override
   State<MyLocationPage> createState() => _MyLocationPageState();
 }
 
 class _MyLocationPageState extends State<MyLocationPage> {
-  Future<Position> determinatedPosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-    }
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.deniedForever) {
-      await Geolocator.openAppSettings();
-    }
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    return await Geolocator.getCurrentPosition();
+  bool serviceEnabled = false;
+  late Position position;
+
+  @override
+  void initState() {
+    super.initState();
+    determinePosition();
   }
 
-  void getCurrentPosition() async {
-    final position = await determinatedPosition();
-    if (kDebugMode) {
-      print(position);
+  Future<void> determinePosition() async {
+    try {
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.deniedForever) {
+        await Geolocator.openAppSettings();
+        return;
+      }
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          // El usuario rechazó los permisos de ubicación
+          return;
+        }
+      }
+
+      position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      if (kDebugMode) {
+        print(position);
+      }
+
+      setState(() {
+        serviceEnabled = true;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error al obtener la ubicación: $e');
+      }
+      // Manejar el error de obtener la ubicación
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: determinePosition,
+              child: const Text('Obtener ubicación'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

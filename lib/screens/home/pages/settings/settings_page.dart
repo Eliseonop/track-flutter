@@ -13,23 +13,16 @@ class MySettingPage extends StatefulWidget {
 }
 
 class _MySettingPageState extends State<MySettingPage> {
-  User? _user;
-  @override
-  void initState() {
-    super.initState();
-    getUserFromSharedPreferences();
-  }
-
-  Future<void> getUserFromSharedPreferences() async {
+  Future<User?> getUserFromSharedPreferences() async {
     // await EasyLoading.show(status: 'loading...');
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('user');
     if (userJson != null) {
       final userMap = jsonDecode(userJson) as Map<String, dynamic>;
       final user = User.fromJson(userMap);
-      setState(() {
-        _user = user;
-      });
+      return user;
+    } else {
+      return null;
     }
     // await EasyLoading.dismiss();
   }
@@ -37,9 +30,6 @@ class _MySettingPageState extends State<MySettingPage> {
   Future<void> logout(context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user');
-    setState(() {
-      _user = null;
-    });
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => WelcomeScreen(),
@@ -49,44 +39,46 @@ class _MySettingPageState extends State<MySettingPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_user != null) {
-      return Scaffold(
-          appBar: AppBar(
-            title: const Text(
-              'Perfil',
-              style: TextStyle(color: Colors.black),
-            ),
-            automaticallyImplyLeading: false,
-          ),
-          body: Column(
-            children: [
-              const SizedBox(height: 40),
-              AvatarComponent(user: _user!),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: 200,
-                child: TextButton(
-                  onPressed: () {
-                    logout(context);
-                  },
-                  style: ButtonStyle(
-                    backgroundColor:
-                        MaterialStateProperty.all(Colors.blue[300]),
-                    alignment: Alignment.center,
-                    padding: MaterialStateProperty.all(
-                      const EdgeInsets.symmetric(vertical: 20),
+    return FutureBuilder<User?>(
+      future: getUserFromSharedPreferences(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return const Text('Error al cargar los datos');
+        } else if (snapshot.hasData) {
+          final data = snapshot.data!;
+          return Scaffold(
+            body: Column(
+              children: [
+                const SizedBox(height: 40),
+                AvatarComponent(user: data),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: 200,
+                  child: TextButton(
+                    onPressed: () {
+                      logout(context);
+                    },
+                    style: ButtonStyle(
+                      backgroundColor:
+                          MaterialStateProperty.all(Colors.blue[300]),
+                      alignment: Alignment.center,
+                      padding: MaterialStateProperty.all(
+                        const EdgeInsets.symmetric(vertical: 20),
+                      ),
                     ),
+                    child: const Text("Logout",
+                        style: TextStyle(color: Colors.white)),
                   ),
-                  child: const Text("Logout",
-                      style: TextStyle(color: Colors.white)),
                 ),
-              ),
-            ],
-          ));
-    } else {
-      return const Center(
-        child: Text(''),
-      );
-    }
+              ],
+            ),
+          );
+        } else {
+          return const Text('No hay datos');
+        }
+      },
+    );
   }
 }

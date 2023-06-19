@@ -66,7 +66,7 @@ class SplashScreenState extends State<SplashScreen> {
 
   Future<void> navigateToNextScreen(context) async {
     // await Future.delayed(const Duration(
-    //     seconds: 3)); // Retardo de 3 segundos (ajústalo según tus necesidades)
+    //     seconds: 1)); // Retardo de 3 segundos (ajústalo según tus necesidades)
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
@@ -92,6 +92,7 @@ class SplashScreenState extends State<SplashScreen> {
         splashTransition: SplashTransition.fadeTransition,
         pageTransitionType: PageTransitionType.fade,
         duration: 3000,
+        animationDuration: const Duration(milliseconds: 3000),
         nextScreen:
             WelcomeScreen(), // Puedes reemplazarlo con tu siguiente pantalla
         function: () => navigateToNextScreen(

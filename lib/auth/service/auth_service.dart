@@ -12,7 +12,7 @@ class AuthService {
   User? get user => _user;
 
   Future<void> login(String username, String password) async {
-    const url = 'https://backend-planilla-23lnu3rcea-uc.a.run.app/login';
+    const url = '';
 
     final response = await http.post(
       Uri.parse(url),
